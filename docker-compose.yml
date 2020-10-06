@@ -1,0 +1,65 @@
+version: "3.4"
+
+services:
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /export/loki && /usr/bin/minio server /export'
+    environment:
+      - MINIO_ACCESS_KEY=697d0993dd097f38d5b8
+      - MINIO_SECRET_KEY=9f88738761b57c63f6a81bdfd471
+    volumes:
+      - ./data/minio:/export
+    ports:
+      - 9000:9000
+    networks:
+      - lokinet
+    
+  go-app:
+    container_name: go-app
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=development
+    networks:
+      - lokinet
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    volumes:
+      - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./data/grafana:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - lokinet
+    depends_on:
+      - loki
+
+  loki:
+    #image: grafana/loki:v1.3.0
+    image: ctovena/loki:logql-parser-5e0238e
+    volumes:
+      - ./config/loki.yaml:/etc/config/loki.yaml
+    entrypoint:
+      - /usr/bin/loki
+      - -config.file=/etc/config/loki.yaml
+    ports:
+      - 3100:3100
+    networks:
+      - lokinet
+    depends_on:
+      - minio
+
+networks:
+  lokinet: {}
