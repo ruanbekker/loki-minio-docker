@@ -34,7 +34,7 @@ services:
       - loki
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:7.3.7
     restart: unless-stopped
     volumes:
       - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
