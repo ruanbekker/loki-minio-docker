@@ -47,8 +47,7 @@ services:
       - loki
 
   loki:
-    #image: grafana/loki:v1.3.0
-    image: ctovena/loki:logql-parser-5e0238e
+    image: grafana/loki:2.1.0
     volumes:
       - ./config/loki.yaml:/etc/config/loki.yaml
     entrypoint:
